@@ -12,7 +12,6 @@ static void die(char *msg){
     perror(msg);
     exit(EXIT_FAILURE);
 }
-// hallooo
 
 
 static void checkResponse(FILE *rx, char *expectedCode){
@@ -25,7 +24,7 @@ static void checkResponse(FILE *rx, char *expectedCode){
 
     // print out status code
     printf("%s", code);
-    
+
     // print out rest of server-response
     int c;
     while (!feof(rx)){
@@ -34,6 +33,9 @@ static void checkResponse(FILE *rx, char *expectedCode){
             break;
         }
         if (fputc(c, stdout) == EOF){
+/*I----> +--------------------------------------------------------------------+
+         | Hier sollte definitiv nichts ausgegeben werden.                    |
+         +-------------------------------------------------------------------*/
             fprintf(stderr, "Error in fputc\n");
             exit(EXIT_FAILURE);
         }
@@ -48,6 +50,13 @@ static void checkResponse(FILE *rx, char *expectedCode){
     // check if code == expected value; exit_failure if not
     if (!(code[0] == expectedCode[0] && code[1] == expectedCode[1] && code[2] == expectedCode[2])){
         // fprintf(stderr, "Unexpected server response code\n");
+/*I      +----A--------------------------------------------------------------+
+         | Das wäre durchaus eine sinnvolle Ausgabe. Der Fehlercode wird zwar |
+         | quasi implizit auf stdout ausgegeben, der Code sollte jedoch nur   |
+         | bei Fehlern ausgegeben werden: "Weicht der Statuscode von dem      |
+         | erwarteten Wert ab, soll das Programm die letzte Antwort des       |
+         | Servers ausgeben und sich mit einem Fehler beenden" (-0.5)         |
+         +-------------------------------------------------------------------*/
         exit(EXIT_FAILURE);
     }
 }
@@ -64,6 +73,9 @@ static void sendLine(FILE *tx, char *line){
     }
 
     printf("%s", line);
+/*I----> +--------------------------------------------------------------------+
+         | Ausgabe an stdout ist hier nicht angebracht                        |
+         +-------------------------------------------------------------------*/
     if (fflush(stdout)){
         die("fflush");
     }
@@ -122,6 +134,11 @@ static void handleBody(FILE *tx){
 
 static void handleDialogue(FILE *rx, FILE *tx, char *recipient, char *subject){
     checkResponse(rx, "220");
+/*I      +---------------A---------------------------------------------------+
+         | Es macht Sinn hier auch auf ein folgendes Leerzeichen zu prüfen,   |
+         | um eventuelle Verwechselungen mit vierstelligen Statuscodes zu     |
+         | vermeiden.                                                         |
+         +-------------------------------------------------------------------*/
 
     // get client-FQDN for HELO statement
     char hostname[256];
@@ -167,13 +184,20 @@ static void handleDialogue(FILE *rx, FILE *tx, char *recipient, char *subject){
             fprintf(stderr, "Matching entry not found\n");
         }
     }
-    
+
     size = strlen("MAIL FROM:") + strlen(username) + strlen("@cip.cs.fau.de\r\n") + 1;
+/*I      +------------------A------------------------------------------------+
+         | Die Mail-Adresse sollte von spitzen Klammern ('<>') umgeben sein.  |
+         +-------------------------------------------------------------------*/
     char *mail_from = malloc(size);
     if (mail_from == NULL){
         die("malloc");
     }
 
+/*I----> +--------------------------------------------------------------------+
+         | Man spart sich etwas Komplexität und ggf. auch etwas Speicher wenn |
+         | man den String mit fprintf(3p) direkt in den FILE* reinschreibt.   |
+         +-------------------------------------------------------------------*/
     strcpy(mail_from, "MAIL FROM:");
     strcat(mail_from, username);
     strcat(mail_from, "@cip.cs.fau.de\r\n");
@@ -183,6 +207,9 @@ static void handleDialogue(FILE *rx, FILE *tx, char *recipient, char *subject){
     checkResponse(rx, "250");
 
     size = strlen("RCPT TO:") + strlen(recipient) + 2 + 1;
+/*I      +----------------A--------------------------------------------------+
+         | Die Mail-Adresse sollte von spitzen Klammern ('<>') umgeben sein.  |
+         +-------------------------------------------------------------------*/
     char *rcpt_to = malloc(size);
     if (rcpt_to == NULL) {
         die("malloc");
@@ -194,7 +221,7 @@ static void handleDialogue(FILE *rx, FILE *tx, char *recipient, char *subject){
     sendLine(tx, rcpt_to);
     free(rcpt_to);
 
-    checkResponse(rx, "250");   
+    checkResponse(rx, "250");
 
     sendLine(tx, "DATA\r\n");
 
@@ -202,8 +229,13 @@ static void handleDialogue(FILE *rx, FILE *tx, char *recipient, char *subject){
 
     // extended username is substring in front of first comma
     char *username_ext = strtok(pwuid->pw_gecos, ",");
+/*I----> +--------------------------------------------------------------------+
+         | Auf Felder, die von getpwuid zurückgegeben werden darf nicht       |
+         | schreibend zugegriffen werden. Der String müsste zunächst          |
+         | dupliziert werden (strdup(3p)) (-1)                                |
+         +-------------------------------------------------------------------*/
 
-    size = strlen("From: ") + strlen(pwuid->pw_gecos) + 1 + strlen(username_ext) + strlen("@cip.cs.fau.de\r\n");    
+    size = strlen("From: ") + strlen(pwuid->pw_gecos) + 1 + strlen(username_ext) + strlen("@cip.cs.fau.de\r\n");
     char *from = malloc(size);
     if (from == NULL){
         die("malloc");
@@ -226,7 +258,7 @@ static void handleDialogue(FILE *rx, FILE *tx, char *recipient, char *subject){
     strcat(to, "\r\n");
     sendLine(tx, to);
     free(to);
-    
+
     if (subject != NULL){
         char *sub = malloc(strlen("Subject: ") + strlen(subject));
         if (sub == NULL){
@@ -254,6 +286,10 @@ static void handleDialogue(FILE *rx, FILE *tx, char *recipient, char *subject){
 
 int main(int argc, char* argv[]){
     if (!(argc == 2 || argc == 3)){
+/*I      +--------------------A----------------------------------------------+
+         | Das hier sollte wohl eher eine 4 sein. Das '-s' sollte auch        |
+         | unterstützt sein und zählt in als eigenes Argument.                |
+         +-------------------------------------------------------------------*/
         fprintf(stderr, "Usage: %s [-s <subject>] <address>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
@@ -267,6 +303,10 @@ int main(int argc, char* argv[]){
     struct addrinfo *head;
     int error = getaddrinfo("faui03.cs.fau.de", "25", &hints, &head);
     if (error){
+/*I----> +--------------------------------------------------------------------+
+         | Eine extra Behandlung von EAI_SYSTEM (perror) wäre hier sinnvoll   |
+         | (-0.5)                                                             |
+         +-------------------------------------------------------------------*/
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(error));
         exit(EXIT_FAILURE);
     }
@@ -290,11 +330,14 @@ int main(int argc, char* argv[]){
     if (curr == NULL){
         die("No address found. Connection failed.\n");
     }
-    freeaddrinfo(head);   
+    freeaddrinfo(head);
 
     // begin communication with server
     // create file* for reading
     FILE *rx = fdopen(sock, "r");
+/*I----> +--------------------------------------------------------------------+
+         | Hier fehlt leider die Fehlerbehandlung (-0.5)                      |
+         +-------------------------------------------------------------------*/
 
     // duplicate sock
     int sock_copy = dup(sock);
@@ -307,13 +350,13 @@ int main(int argc, char* argv[]){
     if (rx == NULL || tx == NULL){
         die("fdopen");
     }
-    
+
     if (argc == 2){
         handleDialogue(rx, tx, argv[1], NULL); // mail without subject
     } else {
         handleDialogue(rx, tx, argv[2], argv[1]); // mail with subject
     }
-    
+
     // close everything and quit
      if (fclose(rx)){
         die("fclose");
@@ -321,10 +364,14 @@ int main(int argc, char* argv[]){
     if (fclose(tx)) {
         die("fclose");
     }
-    
+
     exit(EXIT_SUCCESS);
 }
 
 // TODO:
 //      - was ist gute Fehlerbehandlung fuer fflush und fuer fgetc?
 //      - Weitere Hilfsmethoden sinnvoll?
+
+/*P----> +--------------------------------------------------------------------+
+         | Punktabzug in dieser Datei: 2.5 Punkte                             |
+         +-------------------------------------------------------------------*/

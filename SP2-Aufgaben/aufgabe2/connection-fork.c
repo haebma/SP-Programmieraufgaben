@@ -11,7 +11,7 @@ static void die(char *message){
 }
 
 int initConnectionHandler(){
-    if(initRequestHandler() == -1){ 
+    if(initRequestHandler() == -1){
         return -1; // cmdline-arguments are invalid
     }
 
@@ -22,7 +22,7 @@ int initConnectionHandler(){
     };
 
     if(sigemptyset(&act.sa_mask) == -1) die("sigemptyset");
-    if(sigaction(SIGCHLD, &act, NULL) == -1) die("sigaction");  
+    if(sigaction(SIGCHLD, &act, NULL) == -1) die("sigaction");
 
     return 0;
 }
@@ -31,7 +31,14 @@ void handleConnection(int clientSock, int listenSock){
 
     pid_t p = fork();
     if(p == -1){
-        perror("fork");
+/*I----> +--------------------------------------------------------------------+
+         | fork(2) kann auch aufgrund von Ressourcen-Knappheit scheitern, was |
+         | im späteren Verlauf wieder gelingen kann. Z.B. kann es sein, dass  |
+         | gerade sehr viele Kinder existieren und erst gewartet werden muss  |
+         | bis einige von ihnen tot sind. Deshalb soll hier im Fehlerfall das |
+         | Program nicht beendet werden. (-1.0)                               |
+         +-------------------------------------------------------------------*/
+        die("fork");
     }
     else if(p == 0){
 
@@ -56,6 +63,14 @@ void handleConnection(int clientSock, int listenSock){
 
         exit(EXIT_SUCCESS);
     } else {
+/*I----> +--------------------------------------------------------------------+
+         | Hier müsste das clientSocket geschlossen werden. (-0.5)            |
+         +-------------------------------------------------------------------*/
         // do nothing
     }
 }
+
+
+/*P----> +--------------------------------------------------------------------+
+         | Punktabzug in dieser Datei: 1.5 Punkte                             |
+         +-------------------------------------------------------------------*/

@@ -29,6 +29,11 @@ jbuffer.o: jbuffer.c sem.h
 sem.o: sem.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+##I----> #--------------------------------------------------------------------#
+         # #K Bei jbuffer.o fehlt die Abhängigkeit zu jbuffer.h und bei sem.o #
+         # zu sem.h. (siehe "Häufige Fehler" im Web) (-1)                     #
+         #-------------------------------------------------------------------#/
+
 
 # d) Dynamische Bibliothek
 jbuffer-test-dynamic: jbuffer-test.o libjbuffer-dynamic.so
@@ -45,3 +50,7 @@ jbuffer-dynamic.o: jbuffer.c sem.h jbuffer.h
 
 sem-dynamic.o: sem.c sem.h
 	$(CC) $(CFLAGS) -fPIC -c -o $@ $<
+
+##P----> #--------------------------------------------------------------------#
+         # Punktabzug in dieser Datei: 1.0 Punkte                             #
+         #-------------------------------------------------------------------#/

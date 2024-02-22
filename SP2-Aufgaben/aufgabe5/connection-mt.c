@@ -34,7 +34,7 @@ static long parse_positive_long_or_minus_one(const char *str){
         if(x <= 0){
             return -1;
         }
-        return x;    
+        return x;
 }
 
 static void *execute(){
@@ -50,27 +50,39 @@ static void *execute(){
         if(fcntl(clientSock, F_SETFD, flags | FD_CLOEXEC) == -1){
             perror("fcntl");
             continue;
-        } 
+        }
 
         FILE *rx = fdopen(clientSock, "r");
         if(rx == NULL){
+/*I----> +--------------------------------------------------------------------+
+         | `close(clientSock)` fehlt. (-1)                                    |
+         +-------------------------------------------------------------------*/
             perror("fdopen");
             continue;
         }
-        
+
         int copy = dup(clientSock);
         if(copy == -1){
+/*I----> +--------------------------------------------------------------------+
+         | `fclose(rx)` fehlt. (-1)                                           |
+         +-------------------------------------------------------------------*/
             perror("dup");
             continue;
         }
-        
+
         if(fcntl(copy, F_SETFD, flags | FD_CLOEXEC) == -1) {
+/*I----> +--------------------------------------------------------------------+
+         | `fclose(rx)`/`close(copy)` fehlt.                                  |
+         +-------------------------------------------------------------------*/
             perror("fcntl");
             continue;
         }
 
         FILE *tx = fdopen(copy, "w");
         if(tx == NULL){
+/*I----> +--------------------------------------------------------------------+
+         | `fclose(rx)`/`fclose(tx)` fehlt.                                   |
+         +-------------------------------------------------------------------*/
             perror("fdopen");
             continue;
         }
@@ -81,7 +93,7 @@ static void *execute(){
             perror("fclose");
             continue;
         }
-        if(fclose(tx) == EOF){ 
+        if(fclose(tx) == EOF){
             perror("fclose");
             continue;
         }
@@ -101,7 +113,7 @@ int initConnectionHandler(){
 
     // SIGPIPE ignorieren
     struct sigaction act = {
-        .sa_handler = SIG_IGN,    
+        .sa_handler = SIG_IGN,
     };
 
     if(sigaction(SIGPIPE, &act, NULL) == -1) die("sigaction");
@@ -142,7 +154,25 @@ int initConnectionHandler(){
 
 // socketDeskriptor in buffer einfügen
 void handleConnection(int clientSock, int listenSock){
+/*I----> +--------------------------------------------------------------------+
+         | Es ist zwingend notwendig das close-on-exec-flag auf clientSock    |
+         | bereits hier VOR dem Hinzufügen zum Puffer vorzunehmen. Sonst ist  |
+         | es bei einem sehr großen Puffer, schnell hintereinander            |
+         | eintreffender Anfragen und wenig Threads mit steigender            |
+         | Wahrscheinlichkeit möglich, dass ein anderer Thread ein exec       |
+         | ausfuehrt bevor dieser Dateideskriptor mit dem flag versehen wird. |
+         | Dadurch dass sich alle Threads einen Adressraum teilen können auch |
+         | über Threads hinweg die Dateideskriptoren an Kinder vererbt        |
+         | werden. Das ist ein Problem das sich nicht vollends lösen laesst,  |
+         | aber den Dateideskriptor hier u.U. lange ungeschützt in der Queue  |
+         | zu lassen ist keine gute Idee. Mehr dazu in der T.UE. :) (-0.5)    |
+         +-------------------------------------------------------------------*/
 
     bbPut(buffer, clientSock);
-    
+
 }
+
+
+/*P----> +--------------------------------------------------------------------+
+         | Punktabzug in dieser Datei: 2.5 Punkte                             |
+         +-------------------------------------------------------------------*/

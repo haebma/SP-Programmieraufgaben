@@ -15,14 +15,20 @@ static void die(char *message){
 }
 
 int main(int argc, char* argv[]){
-    
+
     if(argc != 2 && argc != 3){
         fprintf(stderr, "Usage: ./siter --wwwpath=<dir> [--port=<p>]\n");
+/*I      +-------------------------A-----------------------------------------+
+         | Da fehlt ein 's' ;)                                                |
+         +-------------------------------------------------------------------*/
         exit(EXIT_FAILURE);
     }
 
     // Header Dateien initialisieren
     if(cmdlineInit(argc, argv) == -1) die("cmdlineInit");
+/*I      +------------------------------A------------------------------------+
+         | In dem Fall vielleicht auch einfach Usage-Nachricht ausgeben.      |
+         +-------------------------------------------------------------------*/
 
     if(initConnectionHandler() == -1){
         fprintf(stderr, "Usage: ./sister --wwwpath=<dir> [--port=<p>]\n");
@@ -35,22 +41,36 @@ int main(int argc, char* argv[]){
     char *endptr;
 
     if(given_port == NULL){
-        port = 1337; // Standard-Port 
+        port = 1337; // Standard-Port
     } else {
         errno = 0;
         port = strtol(given_port, &endptr, 10); // convert string to base 10 int
         if (errno){
             die("strtol");
         }
-	if(*endptr != '\0'){ // Buchstanben inhalten
-		fprintf(stderr, "--port is not a valid number\n");
-		exit(EXIT_FAILURE);
-	}
+/*I----> +--------------------------------------------------------------------+
+         | Ihr müsst nptr mit endptr vergleichen um festzustellen, da         |
+         | überhaupt etwas eingelesen wurde. Sonst könnt ihr nicht zwischen   |
+         | leeren Strings und 0 unterscheiden. (-0.5)                         |
+         +-------------------------------------------------------------------*/
+    if(*endptr != '\0'){ // Buchstanben inhalten
+        fprintf(stderr, "--port is not a valid number\n");
+        exit(EXIT_FAILURE);
+    }
+/*I----> +--------------------------------------------------------------------+
+         | Bitte achtet in Zukunft auf sinnvolle Einrückung!                  |
+         +-------------------------------------------------------------------*/
         if(port == LONG_MIN || port < 0){
+/*I      +-----A-------------------------------------------------------------+
+         | Der erste Teil ist hier etwas überflüssig.                         |
+         +-------------------------------------------------------------------*/
             fprintf(stderr, "--port is too small\n");
             exit(EXIT_FAILURE);
         }
-	if(port == LONG_MAX || port > 65535){
+    if(port == LONG_MAX || port > 65535){
+/*I      +--A----------------------------------------------------------------+
+         | Der erste Teil ist hier etwas überflüssig.                         |
+         +-------------------------------------------------------------------*/
             fprintf(stderr, "--port is too large\n");
             exit(EXIT_FAILURE);
         }
@@ -86,9 +106,20 @@ int main(int argc, char* argv[]){
         }
         handleConnection(clientSocket, serverSocket);
         if(close(clientSocket) == -1) die("close");
+/*I----> +--------------------------------------------------------------------+
+         | Das ist an sich kein Grund zu sterben. Eine Verbindung kann kaputt |
+         | sein, trotzdem sollten weitere bedient werden. Des weiteren ist es |
+         | Aufgabe des connection-Moduls das clientSocket zu schließen (siehe |
+         | API-Doku)                                                          |
+         +-------------------------------------------------------------------*/
     }
 
     close(serverSocket);
 
     exit(EXIT_SUCCESS);
 }
+
+
+/*P----> +--------------------------------------------------------------------+
+         | Punktabzug in dieser Datei: 0.5 Punkte                             |
+         +-------------------------------------------------------------------*/

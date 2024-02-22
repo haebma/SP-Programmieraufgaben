@@ -10,6 +10,10 @@ struct BNDBUF {
     size_t array_size;
     size_t put_index; // only accessed by producer-thread
     volatile _Atomic int take_index; // only accessed by consumer-threads
+/*I----> +--------------------------------------------------------------------+
+         | `volatile` kann man bei `_Atomic` Variablen weglassen, da das eh   |
+         | "stärker" ist                                                      |
+         +-------------------------------------------------------------------*/
     int *array;
     SEM *sem_put;
     SEM *sem_take;
@@ -18,15 +22,22 @@ struct BNDBUF {
 // free bb itself before return?
 BNDBUF *bbCreate(size_t size){
     if (size <= 0) return NULL;
-    
+
     BNDBUF *bb = (BNDBUF*) malloc(sizeof(BNDBUF));
     if (bb == NULL) return NULL;
     bb->array_size = size;
+/*I----> +--------------------------------------------------------------------+
+         | Wenn size größer als INT_MAX ist, dann wird in der Semaphoren-     |
+         | Implementierung der Wert abgeschnitten. Eine Abfrage               |
+         | diesbezueglich sollte immer dann erfolgen, wenn man in einen       |
+         | kleineren Datentypen umwandelt. Dies geschieht weiter unten mit    |
+         | "semCreate(size)". (-0.5)                                          |
+         +-------------------------------------------------------------------*/
     bb->put_index = 0;
     atomic_init(&bb->take_index, 0);
     bb->array = (int*) malloc(size * sizeof(int));
     if (bb->array == NULL) return NULL;
-    
+
     bb->sem_put = semCreate(size);
     if (bb->sem_put == NULL) {
         free(bb->array);
@@ -81,3 +92,7 @@ int bbGet(BNDBUF *bb){
     V(bb->sem_put);
     return value;
 }
+
+/*P----> +--------------------------------------------------------------------+
+         | Punktabzug in dieser Datei: 0.5 Punkte                             |
+         +-------------------------------------------------------------------*/

@@ -51,13 +51,13 @@ static int printDir(FILE *rx, FILE *tx, const char *abspath, const char *relpath
 
     free(namelist);
     return 0;
-}   
+}
 
 static int executePerl(FILE *rx, FILE *tx, const char* abspath, const char* relpath){
 
     pid_t pid = fork();
     if(pid == -1){                                  // error
-        httpInternalServerError(tx, relpath); 
+        httpInternalServerError(tx, relpath);
         return -1;
     }
     if(pid == 0){                                   // child-process
@@ -73,7 +73,11 @@ static int executePerl(FILE *rx, FILE *tx, const char* abspath, const char* relp
             return -1;
         }
 
-        execl(abspath, abspath, (char*) NULL);   
+        execl(abspath, abspath, (char*) NULL);
+/*I----> +--------------------------------------------------------------------+
+         | Nach dem exec() muss ein exit() stehen! Es muss sichergestellt     |
+         | sein, dass sich der Kindprozess beendet. (-0.5)                    |
+         +-------------------------------------------------------------------*/
         return -1;
     }
     else{                                           // parent-process
@@ -145,24 +149,24 @@ static int printFile(FILE* tx, FILE *fp, const char* abspath, const char* relpat
 int initRequestHandler(){
 
     struct sigaction act = {                        // Zombies sofort aufsammeln
-		.sa_handler = SIG_DFL,
-		.sa_flags = SA_NOCLDWAIT,
-	};
+        .sa_handler = SIG_DFL,
+        .sa_flags = SA_NOCLDWAIT,
+    };
 
-	if(sigemptyset(&act.sa_mask) == -1) die("sigemptyset");
-	if(sigaction(SIGCHLD, &act, NULL) == -1) die("sigaction");
-    
+    if(sigemptyset(&act.sa_mask) == -1) die("sigemptyset");
+    if(sigaction(SIGCHLD, &act, NULL) == -1) die("sigaction");
+
     const char *path = cmdlineGetValueForKey("wwwpath");
     if(path == NULL) return -1;
 
     if(strlen(path) == 0) return -1;
-    
+
     return 0;
 }
 
 void handleRequest(FILE *rx, FILE *tx){
 
-    
+
     char *request = (char *) malloc(8192 + 2 + 1);  // max 8192 chars + \r\n + \0
     if (request == NULL){
         httpInternalServerError(tx, NULL);          // error in malloc
@@ -172,6 +176,9 @@ void handleRequest(FILE *rx, FILE *tx){
     request = fgets(request, 8194,  rx);
     if (request == NULL){
         httpInternalServerError(tx, NULL);
+/*I      +-A-----------------------------------------------------------------+
+         | An sich ist das auch ein Fall von BadRequest...                    |
+         +-------------------------------------------------------------------*/
         fprintf(stderr, "Error or EOF in fgets\n");
         free(request);
         return;
@@ -220,7 +227,7 @@ void handleRequest(FILE *rx, FILE *tx){
 
     strcpy(abspath, wwwpath);                       // copy, weil strcat nimmt keine const char
     strcat(abspath, relpath);
-    
+
     // search for path on server; in the www-path there should only be files that are allowed to read -> no error handling for no rights needed
     errno = 0;
 
@@ -236,7 +243,7 @@ void handleRequest(FILE *rx, FILE *tx){
     if (S_ISDIR(statbuf.st_mode)){
         if (strlen(abspath) >= 1 && abspath[strlen(abspath)-1] != '/'){     // endet nicht auf '/'
             // httpMovedPermanently mit Hinweis auf neuen aktuellen Pfad
-            char completePath[strlen(relpath) + 1];
+            char completePath[strlen(relpath) + 2];
             strcpy(completePath, relpath);
             strcat(completePath, "/");
             httpMovedPermanently(tx, completePath);
@@ -246,11 +253,11 @@ void handleRequest(FILE *rx, FILE *tx){
             char index_path[strlen(abspath) + strlen("index.html") + 1];
             strcpy(index_path, abspath);
             strcat(index_path, "index.html");
-            
+
             // check if index.html exists in directory
             errno = 0;
             FILE *fp = fopen(index_path, "r");
-            
+
             if(errno == ENOENT){      // file doesn't exists
                 printDir(rx, tx, abspath, relpath);
                 free(request);
@@ -260,14 +267,14 @@ void handleRequest(FILE *rx, FILE *tx){
                 printFile(tx, fp, index_path, relpath);
                 free(request);
                 return;
-            }      
+            }
         }
     }
 
     // check, ob es eine reguläre Datei ist && Ausführrechte
     if(S_ISREG(statbuf.st_mode)){
-        if (strlen(abspath) >= 4   // check auf perl-Skript         
-        && abspath[strlen(abspath) - 3] == '.' 
+        if (strlen(abspath) >= 4   // check auf perl-Skript
+        && abspath[strlen(abspath) - 3] == '.'
         && abspath[strlen(abspath) - 2] == 'p'
         && abspath[strlen(abspath) - 1] == 'l'){
             // check if executable
@@ -277,7 +284,7 @@ void handleRequest(FILE *rx, FILE *tx){
             free(request);
             return;
         }
-        else{    
+        else{
             FILE *fp = fopen(abspath, "r");
             printFile(tx, fp, abspath, relpath);
             free(request);
@@ -289,3 +296,8 @@ void handleRequest(FILE *rx, FILE *tx){
         return;
     }
 }
+
+
+/*P----> +--------------------------------------------------------------------+
+         | Punktabzug in dieser Datei: 0.5 Punkte                             |
+         +-------------------------------------------------------------------*/
