@@ -1,0 +1,5 @@
+*.o
+*.gch
+*.pdf
+mother
+connection-mt-m.c
