@@ -23,11 +23,7 @@ Die Programme *clash*, *mach* und *snail* habe ich im 6. Semester noch einmal ne
 
 ## Nutzung
 
-Um die Programme auszuführen, klonen Sie das entsprechende Verzeichnis und führen Sie die Anweisungen
-```bash
-make clean
-```
-gefolgt von
+Um die Programme auszuführen, klonen Sie das entsprechende Verzeichnis und führen Sie die Anweisung
 ```bash
 make
 ```
