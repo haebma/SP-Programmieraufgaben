@@ -23,11 +23,17 @@ Die Programme *clash*, *mach* und *snail* habe ich im 6. Semester noch einmal ne
 
 ## Nutzung
 
-Um die Programme auszuführen, klonen Sie das entsprechende Verzeichnis und führen Sie die Anweisung
+Um die Programme auszuführen (OS nur Linux/Debian), klonen Sie das Repository mittels  
+```bash
+git clone https://github.com/haebma/SP-Programmieraufgaben.git
+```
+
+und führen Sie im entsprechenden Verzeichnis die Anweisung  
 ```bash
 make
 ```
-aus.  
+aus.
+
 Starten Sie das ausführbare Programm dann mit
 ```bash
 ./<programm_name> [<args>]
