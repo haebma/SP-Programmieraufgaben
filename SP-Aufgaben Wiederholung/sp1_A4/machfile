@@ -1,0 +1,4 @@
+gcc -std=c11 -pthread -pedantic -Wall -Werror -D_XOPEN_SOURCE=700 -c mach.c
+gcc -std=c11 -pthread -pedantic -Wall -Werror -D_XOPEN_SOURCE=700 -c queue.c
+
+gcc -o mach -pthread run.o sem.o queue.o mach.o

@@ -1,0 +1,7 @@
+220 faui03.informatik.uni-erlangen.de ESMTP Postfix
+250 faui03.informatik.uni-erlangen.de
+250 2.1.0 Ok
+250 2.1.5 Ok
+354 End data with <CR><LF>.<CR><LF>
+250 2.0.0 Ok: queued as 65AC33E9A9
+221 2.0.0 Bye

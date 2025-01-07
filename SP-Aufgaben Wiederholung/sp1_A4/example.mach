@@ -1,0 +1,32 @@
+sleep 3; echo -n first group: 0
+sleep 3; echo -n first group: 1
+sleep 3; echo -n first group: 2
+sleep 3; echo -n first group: 3
+sleep 3; echo -n first group: 4
+sleep 3; echo -n first group: 5
+sleep 3; echo -n first group: 6
+sleep 3; echo -n first group: 7
+sleep 3; echo -n first group: 8
+sleep 3; echo -n first group: 9
+
+sleep 3; echo -n second group: 0
+sleep 3; echo -n second group: 1
+sleep 3; echo -n second group: 2
+sleep 3; echo -n second group: 3
+sleep 3; echo -n second group: 4
+sleep 3; echo -n second group: 5
+sleep 3; echo -n second group: 6
+sleep 3; echo -n second group: 7
+sleep 3; echo -n second group: 8
+sleep 3; echo -n second group: 9
+
+sleep 3; echo -n third group: 0
+sleep 3; echo -n third group: 1
+sleep 3; echo -n third group: 2
+sleep 3; echo -n third group: 3
+sleep 3; echo -n third group: 4
+sleep 3; echo -n third group: 5
+sleep 3; echo -n third group: 6
+sleep 3; echo -n third group: 7
+sleep 3; echo -n third group: 8
+sleep 3; echo -n third group: 9

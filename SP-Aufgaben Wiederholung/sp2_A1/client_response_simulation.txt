@@ -1,0 +1,15 @@
+HELO Framework-AMD-Ryzen
+MAIL FROM:max@cip.cs.fau.de
+RCPT TO:max.mustermann@gmail.com
+DATA
+From: Max max@cip.cs.fau.de
+To: max.mustermann@gmail.com
+Subject: Lorem ipsum
+
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. 
+..
+Mit freundlichen Grüßen
+
+Max
+.
+QUIT
