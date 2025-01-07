@@ -18,7 +18,7 @@ Die Programme *clash*, *mach* und *snail* habe ich im 6. Semester noch einmal ne
     - Aufgabe 1: SMTP-Client-Programm
     - Aufgabe 2: Einfädiger Webserver
     - Aufgabe 3: Erweiterte Shell
-    - Aufgabe 4: Bibliotheken und Synchronisation (Semaphor, Ringbuffer)
+    - Aufgabe 4: Bibliotheken und Synchronisation (Semaphor- und Ringbufferimplementierung)
     - Aufgabe 5: Multithread-Webserver
 
 ## Nutzung
